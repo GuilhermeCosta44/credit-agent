@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit AI Agent</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <i class="fas fa-robot"></i> Credit Modeling Agent
+        </div>
+        
+        <div class="chat-messages" id="chat-box">
+            </div>
+
+        <div class="typing" id="typing-indicator">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="dynamic-input" placeholder="Digite sua resposta..." autocomplete="off">
+            <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+<script>
+    // Estado do Formulário
+    const formData = {
+        table_path: "",
+        target_column: "",
+        features_text: "",
+        metric: ""
+    };
+
+    // Fluxo da Conversa (Roteiro)
+    const steps = [
+        {
+            field: "table_path",
+            msg: "Olá! Sou seu Agente de Modelagem. 🤖<br>Para começarmos, por favor, informe o <b>Caminho da Tabela</b> (S3/DBFS).",
+            type: "text",
+            placeholder: "Ex: s3://bucket/credit/tabela_full"
+        },
+        {
+            field: "target_column",
+            msg: "Perfeito. Agora, qual é o nome da coluna <b>Target</b> (variável resposta)?",
+            type: "text",
+            placeholder: "Ex: mau_pagador_60d"
+        },
+        {
+            field: "features_text",
+            msg: "Ótimo. Agora preciso da lista de <b>Features</b>.<br>Pode colar a lista separada por vírgula.",
+            type: "textarea",
+            placeholder: "Cole a lista de variáveis aqui..."
+        },
+        {
+            field: "metric",
+            msg: "Por fim, qual métrica você quer priorizar na otimização?",
+            type: "select",
+            options: ["ks2", "auc", "gini"]
+        }
+    ];
+
+    let currentStep = 0;
+    const chatBox = document.getElementById('chat-box');
+    const inputField = document.getElementById('dynamic-input');
+    const sendBtn = document.getElementById('send-btn');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const inputArea = document.querySelector('.input-area');
+
+    // Inicialização
+    window.onload = () => {
+        showBotMessage(steps[0].msg);
+        updateInputType(steps[0]);
+    };
+
+    // Função para adicionar mensagem do Bot
+    function showBotMessage(html) {
+        typingIndicator.style.display = 'block';
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        setTimeout(() => {
+            typingIndicator.style.display = 'none';
+            const div = document.createElement('div');
+            div.className = 'message bot-message';
+            div.innerHTML = html;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            // Foca no input após msg do bot
+            if (currentStep < steps.length) {
+                const currentInput = document.getElementById('dynamic-input');
+                if(currentInput) currentInput.focus();
+            }
+        }, 800); // Delay artificial para parecer "pensando"
+    }
+
+    // Função para adicionar mensagem do Usuário
+    function showUserMessage(text) {
+        const div = document.createElement('div');
+        div.className = 'message user-message';
+        div.innerText = text;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Atualiza o tipo de input baseado no passo atual
+    function updateInputType(step) {
+        const oldInput = document.getElementById('dynamic-input');
+        let newInput;
+
+        if (step.type === 'select') {
+            newInput = document.createElement('select');
+            newInput.id = 'dynamic-input';
+            step.options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.innerText = opt.toUpperCase();
+                newInput.appendChild(option);
+            });
+        } else if (step.type === 'textarea') {
+            newInput = document.createElement('textarea');
+            newInput.id = 'dynamic-input';
+            newInput.placeholder = step.placeholder;
+            newInput.rows = 1; // Começa pequeno
+            // Auto-grow textarea
+            newInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                if(this.value === '') this.style.height = 'auto';
+            });
+        } else {
+            newInput = document.createElement('input');
+            newInput.type = 'text';
+            newInput.id = 'dynamic-input';
+            newInput.placeholder = step.placeholder;
+            newInput.autocomplete = "off";
+        }
+
+        inputArea.replaceChild(newInput, oldInput);
+        
+        // Re-attach enter key event for non-textarea
+        if (step.type !== 'textarea') {
+            newInput.addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    processInput();
+                }
+            });
+        }
+    }
+
+    // Lógica Principal
+    async function processInput() {
+        const input = document.getElementById('dynamic-input');
+        const value = input.value.trim();
+
+        if (!value) return;
+
+        // 1. Mostra a resposta do usuário
+        showUserMessage(value);
+        
+        // 2. Salva o dado
+        const fieldName = steps[currentStep].field;
+        formData[fieldName] = value;
+
+        input.value = ''; // Limpa input
+        
+        // 3. Avança para o próximo passo
+        currentStep++;
+
+        if (currentStep < steps.length) {
+            // Próxima pergunta
+            showBotMessage(steps[currentStep].msg);
+            updateInputType(steps[currentStep]);
+        } else {
+            // FIM DO FORMULÁRIO - Enviar para API
+            document.querySelector('.input-area').style.display = 'none'; // Esconde input
+            showBotMessage("Recebido! Estou analisando sua base de conhecimento e gerando o notebook... 🚀<br>Isso pode levar alguns segundos.");
+            
+            await callApiGenerator();
+        }
+    }
+
+    sendBtn.addEventListener('click', processInput);
+
+    // Chamada à API Python
+    async function callApiGenerator() {
+        try {
+            const response = await fetch('/generate-notebook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) throw new Error('Erro na API');
+
+            // Lógica para baixar o arquivo
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // Tenta pegar o nome do arquivo do header content-disposition
+            const header = response.headers.get('Content-Disposition');
+            let fileName = 'notebook_gerado.ipynb';
+            if (header && header.indexOf('filename=') !== -1) {
+                let result = header.split('filename=')[1];
+                fileName = result.replace(/"/g, '');
+            }
+            
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            showBotMessage("<b>Prontinho!</b> 🎉<br>O download do seu notebook começou.<br><br><a href='javascript:location.reload()' style='color: #00C853'>Criar outro?</a>");
+
+        } catch (error) {
+            console.error(error);
+            showBotMessage("Ops! Tive um problema ao gerar o notebook. Tente novamente. 😔");
+            document.querySelector('.input-area').style.display = 'flex'; // Mostra input de volta
+        }
+    }
+
+</script>
+</body>
+</html>
