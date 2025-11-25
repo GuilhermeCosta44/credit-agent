@@ -31,6 +31,7 @@
 
 <script>
     const formData = {
+        run_path: "", 
         table_path: "",
         target_column: "",
         features_text: "",
@@ -39,31 +40,36 @@
 
     const steps = [
         {
-            field: "table_path",
-            msg: "Olá! Sou seu Agente de Modelagem. 🤖<br>Para começarmos, por favor, informe o <b>Caminho da Tabela</b> (S3/DBFS).",
+            field: "run_path", 
+            msg: "Olá! Vamos gerar um Pipeline Analítico. 🧪<br><br>Primeiro, qual é o <b>Caminho do Notebook de Funções</b> (Base de Conhecimento) no seu Databricks?",
             type: "text",
-            placeholder: "Ex: s3://bucket/credit/tabela_full"
+            placeholder: "Ex: /Workspace/Users/seu.email/Bibliotecas/Funcoes_Credito_v1"
+        },
+        {
+            field: "table_path",
+            msg: "Perfeito. Agora, informe o <b>Caminho da Tabela</b> com os dados (S3/DBFS).",
+            type: "text",
+            placeholder: "Ex: s3://empresa-credit/tb_publicos_modelagem_full"
         },
         {
             field: "target_column",
-            msg: "Perfeito. Agora, qual é o nome da coluna <b>Target</b> (variável resposta)?",
+            msg: "Qual é a coluna <b>Target</b> que queremos prever?",
             type: "text",
-            placeholder: "Ex: mau_pagador_60d"
+            placeholder: "Ex: ever30reneg_mob3"
         },
         {
             field: "features_text",
-            msg: "Ótimo. Agora preciso da lista de <b>Features</b>.<br>Pode colar a lista separada por vírgula.",
+            msg: "Cole a lista de <b>Features</b> (separadas por vírgula ou quebra de linha).",
             type: "textarea",
-            placeholder: "Cole a lista de variáveis aqui..."
+            placeholder: "Cole aqui..."
         },
         {
             field: "metric",
-            msg: "Por fim, qual métrica você quer priorizar na otimização?",
+            msg: "Qual métrica guiará a otimização?",
             type: "select",
             options: ["ks2", "auc", "gini"]
         }
     ];
-
     let currentStep = 0;
     const chatBox = document.getElementById('chat-box');
     const inputField = document.getElementById('dynamic-input');
