@@ -4,7 +4,7 @@ import time
 import google.generativeai as genai
 from dotenv import load_dotenv
 from app.models import ModelingRequest
-from app.services.knowledge_loader import load_reference_code
+from app.services.knowledge_loader import load_reference_cells
 from google.api_core import exceptions
 
 load_dotenv()
@@ -23,7 +23,7 @@ def create_cell(source, cell_type="code"):
 def generate_notebook_json(params: ModelingRequest) -> str:
     print("1. Lendo 'Manual de Instruções' das funções...")
     # O Agente lê o arquivo local para APRENDER a usar as funções, não para copiar.
-    reference_context = load_reference_code()
+    reference_context = load_reference_cells()
     
     # Modelo Lite (Rápido e eficiente)
     model_name = 'models/gemini-2.0-flash-lite-preview-02-05'
