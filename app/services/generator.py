@@ -59,23 +59,19 @@ def generate_notebook_json(params: ModelingRequest) -> str:
         response = model.generate_content(prompt)
         execution_code = response.text.replace("```python", "").replace("```", "").strip()
         
-        # --- MONTAGEM DO NOTEBOOK (O PULO DO GATO) ---
-        # 1. Cabeçalho Markdown
+      
         notebook_cells = [
             create_cell(f"# Projeto Automático: {params.target_column}\nGerado por IA.", "markdown"),
             create_cell("%pip install --upgrade optbinning tqdm mlflow==2.11.2 shap optuna optuna-integration xgboost catboost scikit-learn\ndbutils.library.restartPython()", "code")
         ]
         
-        # 2. Injeta TODAS as suas funções originais (sem depender da IA escrever)
         notebook_cells.append(create_cell("# --- BIBLIOTECA DE FUNÇÕES (Carregadas da Base de Conhecimento) ---", "markdown"))
         for code in static_code_cells:
             notebook_cells.append(create_cell(code, "code"))
             
-        # 3. Adiciona a célula gerada pela IA (Execução)
         notebook_cells.append(create_cell("# --- PIPELINE DE EXECUÇÃO ---", "markdown"))
         notebook_cells.append(create_cell(execution_code, "code"))
 
-        # 4. Cria o JSON final
         notebook_json = {
             "cells": notebook_cells,
             "metadata": {

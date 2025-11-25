@@ -9,6 +9,8 @@
 </head>
 <body>
 
+    <img src="https://logodownload.org/wp-content/uploads/2018/05/picpay-logo.png" alt="">
+
     <div class="chat-container">
         <div class="chat-header">
             <i class="fas fa-robot"></i> Credit Modeling Agent
@@ -28,7 +30,6 @@
     </div>
 
 <script>
-    // Estado do Formulário
     const formData = {
         table_path: "",
         target_column: "",
@@ -36,7 +37,6 @@
         metric: ""
     };
 
-    // Fluxo da Conversa (Roteiro)
     const steps = [
         {
             field: "table_path",
@@ -71,13 +71,11 @@
     const typingIndicator = document.getElementById('typing-indicator');
     const inputArea = document.querySelector('.input-area');
 
-    // Inicialização
     window.onload = () => {
         showBotMessage(steps[0].msg);
         updateInputType(steps[0]);
     };
 
-    // Função para adicionar mensagem do Bot
     function showBotMessage(html) {
         typingIndicator.style.display = 'block';
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -90,15 +88,13 @@
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
             
-            // Foca no input após msg do bot
             if (currentStep < steps.length) {
                 const currentInput = document.getElementById('dynamic-input');
                 if(currentInput) currentInput.focus();
             }
-        }, 800); // Delay artificial para parecer "pensando"
+        }, 800); 
     }
 
-    // Função para adicionar mensagem do Usuário
     function showUserMessage(text) {
         const div = document.createElement('div');
         div.className = 'message user-message';
@@ -107,7 +103,6 @@
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Atualiza o tipo de input baseado no passo atual
     function updateInputType(step) {
         const oldInput = document.getElementById('dynamic-input');
         let newInput;
@@ -125,8 +120,8 @@
             newInput = document.createElement('textarea');
             newInput.id = 'dynamic-input';
             newInput.placeholder = step.placeholder;
-            newInput.rows = 1; // Começa pequeno
-            // Auto-grow textarea
+            newInput.rows = 1; 
+        
             newInput.addEventListener('input', function() {
                 this.style.height = 'auto';
                 this.style.height = (this.scrollHeight) + 'px';
@@ -142,7 +137,6 @@
 
         inputArea.replaceChild(newInput, oldInput);
         
-        // Re-attach enter key event for non-textarea
         if (step.type !== 'textarea') {
             newInput.addEventListener("keypress", function(event) {
                 if (event.key === "Enter") {
@@ -152,32 +146,27 @@
         }
     }
 
-    // Lógica Principal
     async function processInput() {
         const input = document.getElementById('dynamic-input');
         const value = input.value.trim();
 
         if (!value) return;
 
-        // 1. Mostra a resposta do usuário
         showUserMessage(value);
         
-        // 2. Salva o dado
         const fieldName = steps[currentStep].field;
         formData[fieldName] = value;
 
-        input.value = ''; // Limpa input
+        input.value = ''; 
         
-        // 3. Avança para o próximo passo
+
         currentStep++;
 
         if (currentStep < steps.length) {
-            // Próxima pergunta
             showBotMessage(steps[currentStep].msg);
             updateInputType(steps[currentStep]);
         } else {
-            // FIM DO FORMULÁRIO - Enviar para API
-            document.querySelector('.input-area').style.display = 'none'; // Esconde input
+            document.querySelector('.input-area').style.display = 'none'; 
             showBotMessage("Recebido! Estou analisando sua base de conhecimento e gerando o notebook... 🚀<br>Isso pode levar alguns segundos.");
             
             await callApiGenerator();
@@ -186,7 +175,6 @@
 
     sendBtn.addEventListener('click', processInput);
 
-    // Chamada à API Python
     async function callApiGenerator() {
         try {
             const response = await fetch('/generate-notebook', {
@@ -199,13 +187,11 @@
 
             if (!response.ok) throw new Error('Erro na API');
 
-            // Lógica para baixar o arquivo
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             
-            // Tenta pegar o nome do arquivo do header content-disposition
             const header = response.headers.get('Content-Disposition');
             let fileName = 'notebook_gerado.ipynb';
             if (header && header.indexOf('filename=') !== -1) {
@@ -223,7 +209,7 @@
         } catch (error) {
             console.error(error);
             showBotMessage("Ops! Tive um problema ao gerar o notebook. Tente novamente. 😔");
-            document.querySelector('.input-area').style.display = 'flex'; // Mostra input de volta
+            document.querySelector('.input-area').style.display = 'flex'; 
         }
     }
 

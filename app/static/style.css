@@ -22,9 +22,14 @@ body {
     align-items: center;
     height: 100vh;
     overflow: hidden;
+    flex-direction: column;
 }
 
-/* Container do Chat */
+img{
+    width: 10%;
+    margin-bottom: 1%;
+}
+
 .chat-container {
     width: 100%;
     max-width: 600px;
@@ -38,7 +43,6 @@ body {
     position: relative;
 }
 
-/* Cabeçalho */
 .chat-header {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     padding: 20px;
@@ -141,7 +145,6 @@ body {
     cursor: not-allowed;
 }
 
-/* Typing Indicator */
 .typing {
     display: none;
     align-self: flex-start;
@@ -167,7 +170,6 @@ body {
     40% { transform: scale(1); }
 }
 
-/* Select Style */
 select#dynamic-input {
     background: white;
     cursor: pointer;
